@@ -1,17 +1,16 @@
 package com.example.tictactoe;
 
 import androidx.appcompat.app.AppCompatActivity;
-
 import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
 import android.widget.ImageView;
+import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
-    BoardCell[] gameBoard = new BoardCell[9];
-
-// 0 => O 1=> X
-   int currPlayer = 0;
+    // 0 => O 1=> X
+    public static int currPlayer = 0;
+    public static int turnCounter = 0;
+    public static BoardCell[][] gameBoard = new BoardCell[3][3];
+    public static Boolean isGameOver = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,29 +20,61 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void buildBoard() {
-        ImageView im;
-        String imId;
+        int nImgId = 0;
 
-        for( int i = 0; i <= 8 ; i ++) {
-            final int index = i;
+        for( int i = 0; i < 3 ; i ++) {
+            for( int j = 0; j < 3 ; j ++) {
+                final int rowIndex = i;
+                final int colIndex = j;
 
-            imId = "mainactivity_" + (i + 1) + "_img";
-            im = findViewById(getResources().getIdentifier(imId, "id", getPackageName()));
+                Button restartButton = findViewById(R.id.restartbutton);
+                restartButton.setOnClickListener(View -> {
+                    cleanBoard();
+                });
 
-            im.setOnClickListener(view -> {
-                if (gameBoard[index].getState() == 2) {
-                    changeCellState(index);
-                    changeCellPhoto(index);
-                    changePlayer();
-                }
-            });
+                String sImgId = "mainactivity_" + (nImgId + 1) + "_img";
+                ImageView imgView = findViewById(getResources().getIdentifier(sImgId, "id", getPackageName()));
 
-            gameBoard[i] = new BoardCell(im);
+                imgView.setOnClickListener(view -> {
+                    if(!isGameOver) {
+                        changePlayer(); // todo
+                        if (gameBoard[rowIndex][colIndex].getState() == 2) {
+                            changeCellState(rowIndex, colIndex);
+                            changeCellImg(rowIndex, colIndex, currPlayer);
+                            turnCounter++;
+                        }
+                        if(iSWinnig(rowIndex, colIndex)) {
+                            if(currPlayer == 0) {
+                                changeWinnerImg(R.drawable.owin);
+                            } else {
+                                changeWinnerImg(R.drawable.xwin);
+                            }
+                        } else if(turnCounter == 9) {
+                            changeWinnerImg(R.drawable.nowin);
+                        }
+                    }
+                });
+
+                gameBoard[rowIndex][colIndex] = new BoardCell(imgView);
+                nImgId++;
+            }
         }
     }
 
-    private void changeCellState(final int place) {
-        gameBoard[place].setState(currPlayer);
+    private void changeCellState( int i,  int j) {
+        gameBoard[i][j].setState(currPlayer);
+    }
+
+    private void cleanBoard() {
+        for( int i = 0; i < 3 ; i ++) {
+            for( int j = 0; j < 3 ; j ++) {
+                gameBoard[i][j].setState(2);
+                changeCellImg(i,j,2);
+                turnCounter=0;
+                currPlayer=0;
+                // todo whatplayer
+            }
+        }
     }
 
     private void changePlayer() {
@@ -51,7 +82,7 @@ public class MainActivity extends AppCompatActivity {
         currPlayer = 1 - currPlayer;
 
 //      Change player photo
-        ImageView currPlayerImg = findViewById(R.id.mainactivity_player_img);
+        ImageView currPlayerImg = findViewById(R.id.mainactivity_MessagesArea_img);
 
         if(currPlayer == 0) {
             currPlayerImg.setImageResource(R.drawable.oplay);
@@ -60,12 +91,55 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void changeCellPhoto(final int place){
-        if(currPlayer == 0) {
-            gameBoard[place].getIm().setImageResource(R.drawable.o);
+    private void changeCellImg( int i,  int j, int cellState) {
+        if(cellState == 0) {
+            gameBoard[i][j].getIm().setImageResource(R.drawable.o);
+        } else if(cellState == 1){
+            gameBoard[i][j].getIm().setImageResource(R.drawable.x);
         } else {
-            gameBoard[place].getIm().setImageResource(R.drawable.x);
+            gameBoard[i][j].getIm().setImageResource(R.drawable.empty);
         }
+    }
+
+    private void changeWinnerImg(int img) {
+        ImageView winnerImg = findViewById(R.id.mainactivity_MessagesArea_img);
+        winnerImg.setImageResource(img);
+    }
+
+        private boolean iSWinnig(int rowIndex, int colIndex){
+        isGameOver = rowWin(rowIndex) ||
+                colWin(colIndex) ||
+                mainDiagonalWin(rowIndex, colIndex) ||
+                secondDiagonalWin(rowIndex, colIndex);;
+        return isGameOver;
+    }
+
+    private boolean rowWin(int rowIndex) {
+        if(gameBoard[rowIndex][0].getState() != 2 && gameBoard[rowIndex][0].getState() == gameBoard[rowIndex][1].getState() && gameBoard[rowIndex][2].getState() == gameBoard[rowIndex][1].getState()) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean colWin(int colIndex) {
+        if(gameBoard[0][colIndex].getState() != 2 && gameBoard[0][colIndex].getState() == gameBoard[1][colIndex].getState() && gameBoard[1][colIndex].getState() == gameBoard[2][colIndex].getState()) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean mainDiagonalWin(int rowIndex, int colIndex) {
+        if(gameBoard[0][0].getState() != 2 && gameBoard[0][0].getState() == gameBoard[1][1].getState() && gameBoard[1][1].getState() == gameBoard[2][2].getState()) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean secondDiagonalWin(int rowIndex, int colIndex) {
+        if(gameBoard[0][2].getState() != 2 && gameBoard[0][2].getState() == gameBoard[1][1].getState() && gameBoard[1][1].getState() == gameBoard[2][0].getState()) {
+            return true;
+        }
+        return false;
     }
 
     public class BoardCell {
