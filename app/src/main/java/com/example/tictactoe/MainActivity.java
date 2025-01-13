@@ -7,16 +7,25 @@ import android.widget.Button;
 
 public class MainActivity extends AppCompatActivity {
     // 0 => O 1=> X
-    public static int currPlayer = 0;
-    public static int turnCounter = 0;
+    public static int currPlayer;
+    public static int turnCounter;
     public static BoardCell[][] gameBoard = new BoardCell[3][3];
-    public static Boolean isGameOver = false;
+    public static Boolean isGameOver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        initBoardVar();
         buildBoard();
+    }
+
+    private void initBoardVar() {
+       turnCounter = 0;
+       isGameOver = false;
+       currPlayer = 1;
+       ImageView currPlayerImg = findViewById(R.id.mainactivity_MessagesArea_img);
+       currPlayerImg.setImageResource(R.drawable.xplay);
     }
 
     private void buildBoard() {
@@ -27,36 +36,44 @@ public class MainActivity extends AppCompatActivity {
                 final int rowIndex = i;
                 final int colIndex = j;
 
-                Button restartButton = findViewById(R.id.restartbutton);
-                restartButton.setOnClickListener(View -> {
-                    cleanBoard();
-                });
+                clickOnRestartButton();
 
                 String sImgId = "mainactivity_" + (nImgId + 1) + "_img";
                 ImageView imgView = findViewById(getResources().getIdentifier(sImgId, "id", getPackageName()));
-
                 imgView.setOnClickListener(view -> {
-                    if(!isGameOver) {
-                        changePlayer(); // todo
-                        if (gameBoard[rowIndex][colIndex].getState() == 2) {
-                            changeCellState(rowIndex, colIndex);
-                            changeCellImg(rowIndex, colIndex, currPlayer);
-                            turnCounter++;
-                        }
-                        if(iSWinnig(rowIndex, colIndex)) {
-                            if(currPlayer == 0) {
-                                changeWinnerImg(R.drawable.owin);
-                            } else {
-                                changeWinnerImg(R.drawable.xwin);
-                            }
-                        } else if(turnCounter == 9) {
-                            changeWinnerImg(R.drawable.nowin);
-                        }
-                    }
+                    turnFlow(rowIndex,colIndex);
                 });
 
                 gameBoard[rowIndex][colIndex] = new BoardCell(imgView);
                 nImgId++;
+            }
+        }
+    }
+
+    private void clickOnRestartButton() {
+        Button restartButton = findViewById(R.id.restartbutton);
+        restartButton.setOnClickListener(View -> {
+            cleanBoard();
+        });
+    }
+
+    private void turnFlow(int rowIndex, int colIndex) {
+        if(!isGameOver) {
+            if (gameBoard[rowIndex][colIndex].getState() == 2) {
+                changeCellState(rowIndex, colIndex);
+                changeCellImg(rowIndex, colIndex, currPlayer);
+                turnCounter++;
+            }
+            if(iSWinnig(rowIndex, colIndex)) {
+                if(currPlayer == 0) {
+                    changeWinnerImg(R.drawable.owin);
+                } else {
+                    changeWinnerImg(R.drawable.xwin);
+                }
+            } else if(turnCounter == 9) {
+                changeWinnerImg(R.drawable.nowin);
+            } else {
+                changePlayer();
             }
         }
     }
@@ -70,9 +87,7 @@ public class MainActivity extends AppCompatActivity {
             for( int j = 0; j < 3 ; j ++) {
                 gameBoard[i][j].setState(2);
                 changeCellImg(i,j,2);
-                turnCounter=0;
-                currPlayer=0;
-                // todo whatplayer
+                initBoardVar();
             }
         }
     }
